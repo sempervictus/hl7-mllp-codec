@@ -17,7 +17,6 @@
 //! ### Publisher
 //! ```
 //!use bytes::*;
-//!use tokio;
 //!use tokio_util::codec::Framed;
 //!use tokio::net::TcpStream;
 //!use futures::{SinkExt, StreamExt};
@@ -26,27 +25,27 @@
 //!
 //!#[tokio::main]
 //!async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!		// Open a TCP stream to the socket address.
-//!		let stream = TcpStream::connect("127.0.0.1:8080").await?;
+//!    // Open a TCP stream to the socket address.
+//!    let stream = TcpStream::connect("127.0.0.1:8080").await?;
 //!
-//! 	// Construct a MLLP transport using our codec
-//!		let mut transport = Framed::new(stream, MllpCodec::new());
+//!    // Construct a MLLP transport using our codec
+//!    let mut transport = Framed::new(stream, MllpCodec::new());
 //!
-//!		// Send some bytes wrapped in MLLP (Note: not a valid HL7 message)
-//!		transport.send(BytesMut::from("Hello World")).await?; //because this is through the codec it gets wrapped in MLLP header/footer for us
+//!    // Send some bytes wrapped in MLLP (Note: not a valid HL7 message)
+//!    transport.send(BytesMut::from("Hello World")).await?; //because this is through the codec it gets wrapped in MLLP header/footer for us
 //!
-//!		if let Some(response) = transport.next().await {
-//!			match response{
-//!				Ok(msg) => println!("  Received response: {:?}", msg),
-//!				Err(e) => println!("  ERROR: {:?}", e)
-//!			}
-//!		}
+//!    if let Some(response) = transport.next().await {
+//!        match response{
+//!            Ok(msg) => println!("  Received response: {:?}", msg),
+//!            Err(e) => println!("  ERROR: {:?}", e)
+//!        }
+//!    }
 //!
-//!	Ok(())
+//!    Ok(())
 //!}
 
 use bytes::buf::{Buf, BufMut};
-use bytes::{BytesMut};
+use bytes::BytesMut;
 use log::{debug, trace};
 use tokio_util::codec::*;
 
@@ -183,7 +182,7 @@ mod tests {
 
         match m.encode(data, &mut output_buf) {
             Ok(()) => {}
-            _ => assert!(false, "Non OK value returned from encode"),
+            _ => panic!("Non OK value returned from encode"),
         }
         let encoded_msg = output_buf.freeze();
         println!("Encoded: {:?}", encoded_msg);
@@ -199,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_footer_detected(){
+    fn missing_footer_detected() {
         let data = BytesMut::from("no footer");
         let result = MllpCodec::get_footer_position(&data);
 
@@ -214,11 +213,11 @@ mod tests {
         let result = m.decode(&mut data);
         println!("simple message result: {:?}", result);
         match result {
-            Ok(None) => assert!(false, "Failed to find a simple message!"),
+            Ok(None) => panic!("Failed to find a simple message!"),
             Ok(Some(message)) => {
                 assert_eq!(&message[..], b"abcd");
             }
-            Err(err) => assert!(false, "Error looking for simple message: {:?}", err),
+            Err(err) => panic!("Error looking for simple message: {:?}", err),
         }
     }
 
@@ -237,7 +236,7 @@ mod tests {
             Ok(Some(message)) => {
                 assert_eq!(&message[..], b"Test Data");
             }
-            _ => assert!(false, "Failure for message with illegal trailing data"),
+            _ => panic!("Failure for message with illegal trailing data"),
         }
     }
 
@@ -269,7 +268,7 @@ mod tests {
             Ok(Some(message)) => {
                 assert_eq!(&message[..], b"Test Data");
             }
-            _ => assert!(false),
+            _ => panic!("Error decoding second message"),
         }
 
         let result = mllp.decode(&mut data2);
@@ -277,7 +276,7 @@ mod tests {
             Ok(Some(message)) => {
                 assert_eq!(&message[..], b"This is different");
             }
-            _ => assert!(false, "Error decoding second message"),
+            _ => panic!("Error decoding second message"),
         }
     }
 
@@ -291,7 +290,7 @@ mod tests {
             Ok(Some(message)) => {
                 assert_eq!(message.len(), 338);
             }
-            _ => assert!(false),
+            _ => panic!("Error decoding second message"),
         }
     }
 }
